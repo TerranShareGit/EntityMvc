@@ -1,0 +1,126 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="jumbotron">
+    <h1>ASP.NET</h1>
+    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Получить</h2>
+        <p>
+            <input id="getEntities" type="button" value="Получить сущности" />
+            <div id="dialog" title="Сущности">
+                <table id="entityTable"></table>
+            </div>
+        </p>
+    </div>
+    @if (HttpContext.Current.User.IsInRole("Admin"))
+    {
+        <div class="col-md-4">
+            <h2>Создать</h2>
+            <form action="Create" method="post" border="0" id="createForm">
+                <div id="createContainer">
+                    <label>Description</label>
+                    <input id="Description" name="Description" type="text">
+                    <input type="hidden" name="action" value="create" />
+                    <input id="createEntity" type="button" value="Создать сущность" />
+                </div>
+            </form>
+        </div>
+    }
+    @if (HttpContext.Current.User.IsInRole("Admin"))
+    {
+        <div class="col-md-4">
+            <h2>Удалить</h2>
+            <form action="Delete" method="post" border="0" id="deleteForm">
+                <div id="deleteContainer">
+                    <label>Id</label>
+                    <input id="Id" name="Id" type="number">
+                    <input type="hidden" name="action" value="create" />
+                    <input id="deleteEntity" type="button" value="Удалить сущность" />
+                </div>
+            </form>
+        </div>
+    }
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(function () {
+            $("#dialog").dialog({ autoOpen: false });
+            $("#dialog2").dialog({ autoOpen: false });
+
+            var tokenKey = "tokenInfo";
+
+            $("#getEntities").click(function () {
+                $.ajax({
+                    url: "/Home/GetAllEntities",
+                    type: 'GET',
+                    async: true,
+                    dataType: 'JSON',
+                    beforeSend: function (xhr) {
+                        var token = sessionStorage.getItem(tokenKey);
+                        xhr.setRequestHeader("Authorization", "Bearer " + token);
+                    },
+                    success: function (response) {
+                        var len = response.length;
+                        $("#entityTable").empty();
+                        for (var i = 0; i < len; i++) {
+                            var id = response[i].Id;
+                            var description = response[i].Description;
+                            var tr = "<tr>" +
+                                "<td>" +
+                                id +
+                                " - </td>" +
+                                "<td>" +
+                                description +
+                                "</td>" +
+                                "</tr>";
+                            $("#entityTable").append(tr);
+                            $("#dialog").dialog("open");
+                        }
+                    }
+                });
+            });
+
+            $("#createEntity").click(function(){
+                $.ajax({
+
+                    url: "/Home/Create",
+                    type: "POST",
+                    data: $("#createForm").serialize(),
+                    beforeSend: function (xhr) {
+                        var token = sessionStorage.getItem(tokenKey);
+                        xhr.setRequestHeader("Authorization", "Bearer " + token);
+                    },
+                    success: function(result){
+                        $('#response').remove();
+                        $('#createContainer').append('<p id = "response">' + result + '</p>');
+                    }
+                });         
+
+            });
+
+            $("#deleteEntity").click(function(){
+                $.ajax({
+
+                    url: "/Home/Delete",
+                    type: "POST",
+                    data: $("#deleteForm").serialize(),
+                    beforeSend: function (xhr) {
+                        var token = sessionStorage.getItem(tokenKey);
+                        xhr.setRequestHeader("Authorization", "Bearer " + token);
+                    },
+                    success: function(result){
+                        $('#response').remove();
+                        $('#deleteContainer').append('<p id = "response">' + result + '</p>');
+                    }
+                });         
+
+            });
+        })
+    </script>
+}
